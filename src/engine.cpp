@@ -2,8 +2,7 @@
 #include <random>
 #include <iostream>
 #include <thread>
-#include <fstream>
-#include <chrono>
+//#include <chrono>
 //#include "CoutRedirector.cpp"
 #include "engine.hpp"
 #include "butils.hpp"
@@ -342,14 +341,16 @@ double evaluate(const Board& b,PlayerColor player) {
 
 double alpha_beta_minimax(Board b, int depth, double alpha, double beta, bool maximizing_player,Engine *e,PlayerColor player) {
 
-    if (depth <= 0 || b.get_legal_moves().size()<=0) {
+    std::unordered_set<U16> moves = b.get_legal_moves();
+
+    if (depth <= 0 || moves.size()<=0) {
         return evaluate(b,player);
     }
 
     if (maximizing_player) {
         double max_eval = -99999;
         U16 best_move=0;
-        auto moves = b.get_legal_moves();
+    //    auto moves = b.get_legal_moves();
         for (auto move : moves) {
             Board* copy_board = new Board(b);
             copy_board->do_move_(move);
@@ -373,7 +374,7 @@ double alpha_beta_minimax(Board b, int depth, double alpha, double beta, bool ma
         return max_eval;
     } else {
         double min_eval = 99999;
-        auto moves = b.get_legal_moves();
+     //   auto moves = b.get_legal_moves();
         U16 best_move=0;
         for (auto move : moves) {
             Board* copy_board = new Board(b);
@@ -401,8 +402,8 @@ double alpha_beta_minimax(Board b, int depth, double alpha, double beta, bool ma
 
 
 bool no_immidiate_threat(const Board &b){
-    std::ofstream outdata; 
-    outdata.open("log.txt", std::ios_base::app);
+ //   std::ofstream outdata; 
+  //  outdata.open("log.txt", std::ios_base::app);
     int si = (b.data. player_to_play>>7) * 10;
     U8 *pieces = (U8*)(&b.data);
      for (int i=0; i<b.data.n_pieces; i++) {
@@ -410,7 +411,7 @@ bool no_immidiate_threat(const Board &b){
         if (piece == DEAD) continue;
         else {
             if(b.under_threat(piece)){
-                outdata<<" Threat found"<<std::endl;
+          //      outdata<<" Threat found"<<std::endl;
                 return false;
             }
         }
@@ -443,23 +444,24 @@ U16  get_anti_move(Board b,U16 move){
 }
 
 U16 Engine::find_best_move_7_3(const Board &b){
-     std::ofstream outdata; 
-    outdata.open("log.txt", std::ios_base::app);
+   //  std::ofstream outdata; 
+   // outdata.open("log.txt", std::ios_base::app);
      std::unordered_set<U16> moveset = b.get_legal_moves();
      Board *b1 = new Board(b);
      if (moveset.size() == 0) {
         std::cout << "Could not get any moves from board!\n";
         std::cout << board_to_str(&b.data);
         this->best_move = 0;
+        return this->best_move;
     }
     bool is_legal_move=false;
 
-    std::cout<<"1"<<std::endl;
+   // std::cout<<"1"<<std::endl;
     //outdata<<"1";
      if(this->no_start_moves_7_3!=0){
         if(b1->data.player_to_play==BLACK){
             U16 anti_move= get_anti_move(*b1,this->start_moves_7_3[7-this->no_start_moves_7_3]);
-            outdata<<"Anti move"<< move_to_str(anti_move)<<std::endl;
+          //  outdata<<"Anti move"<< move_to_str(anti_move)<<std::endl;
             is_legal_move=moveset.count(anti_move)>0?true:false;
             b1->do_move_without_flip_(get_anti_move(*b1,this->start_moves_7_3[7-this->no_start_moves_7_3])); //correct this
         }
@@ -477,10 +479,11 @@ U16 Engine::find_best_move_7_3(const Board &b){
             this->best_move= get_anti_move(b,this->start_moves_7_3[7-this->no_start_moves_7_3]);
             this->no_start_moves_7_3--;
             this->best_move;
+            return this->best_move;
      }
     else {
-        std::cout<<"2"<<std::endl;
-        int depth_level=3; //4
+     //   std::cout<<"2"<<std::endl;
+        int depth=3; //4
         //if(!no_immidiate_threat(b)){
           //  depth_level=2;
         //}
@@ -507,38 +510,43 @@ U16 Engine::find_best_move_7_3(const Board &b){
         std::unordered_set<U16> last_moves=b.get_pseudolegal_moves_for_piece(this->last_moved);
         special_moves.insert( last_moves.begin(), last_moves.end());
     
-     std::cout <<"Legal Moves :";
-     for (auto m : moveset) {
-            std::cout << move_to_str(m) << " ";
-        }
-      std::cout <<" Special Moves :";
-     for (auto m : special_moves) {
-           outdata << move_to_str(m) << " ";
-        }
-    std::cout <<"\n";
+   //  std::cout <<"Legal Moves :";
+   //  for (auto m : moveset) {
+   //         std::cout << move_to_str(m) << " ";
+   //     }
+   //   std::cout <<" Special Moves :";
+   //  for (auto m : special_moves) {
+   //        outdata << move_to_str(m) << " ";
+   //     }
+  //  std::cout <<"\n";
     double best_score = -99999;
     U16 best_move = random_sampling(moveset)[0];
     this->best_move=best_move;
-    std::cout<<"random_move "<<move_to_str(this->best_move)<<"\n";
+  //  std::cout<<"random_move "<<move_to_str(this->best_move)<<"\n";
     std::chrono::milliseconds time_limit(20000);
     //Board* copy_board = b.copy();
-    for(int depth=depth_level;depth<=depth_level;depth++){
         double best_max = -99999;
         U16 max_move=0;
         bool complete=true;
-        std::cout<<"at depth "<<depth;
+    //    std::cout<<"at depth "<<depth;
         for (auto move : moveset)
         {   if(special_moves.count(move)>0 && this->time_left>time_limit){
               depth = 4;
         }   if(this->time_left<time_limit){
-              depth =2 ;
+               std::srand(std::time(0));
+               int random_percentage = std::rand() % 100;
+              if (random_percentage < 70) {
+                  depth = 2;
+              } else {
+                  depth = 3;
+              }
         }
             Board *copy_board = new Board(b);
             copy_board->do_move_(move);
           //  copy_board->data.player_to_play = (PlayerColor)(copy_board->data.player_to_play ^ (WHITE | BLACK));
             double score = alpha_beta_minimax(*copy_board, depth - 1, -99999, 99999, false, this,b.data.player_to_play);
           //  std::cout<<board_to_str(&b.data)<<" score "<<score<<"\n";
-            outdata<<board_to_str(&b.data)<<" score "<<score<<" "<<depth<<" "<<move_to_str(move)<<"\n";
+      //      outdata<<board_to_str(&b.data)<<" score "<<score<<" "<<depth<<" "<<move_to_str(move)<<"\n";
 
             if (score > best_max)
             {
@@ -550,34 +558,33 @@ U16 Engine::find_best_move_7_3(const Board &b){
            best_score=best_max;
            best_move=max_move;
 
-        std::cout<<" best move "<<move_to_str(best_move)<<"\n";
+     //   std::cout<<" best move "<<move_to_str(best_move)<<"\n";
       //  outdata<<" best move "<<move_to_str(best_move)<<"\n";
         this->best_move=best_move;
-    }
-   this->best_move = best_move;
         }
     return best_move;
 }
 
 
 U16 Engine::find_best_move_8_4(const Board &b){
-     std::ofstream outdata; 
-    outdata.open("log.txt", std::ios_base::app);
+   //  std::ofstream outdata; 
+  //  outdata.open("log.txt", std::ios_base::app);
      std::unordered_set<U16> moveset = b.get_legal_moves();
      Board *b1 = new Board(b);
      if (moveset.size() == 0) {
         std::cout << "Could not get any moves from board!\n";
         std::cout << board_to_str(&b.data);
         this->best_move = 0;
+        return this->best_move;
     }
     bool is_legal_move=false;
 
-    std::cout<<"1"<<std::endl;
+  //  std::cout<<"1"<<std::endl;
     //outdata<<"1";
      if(this->no_start_moves_8_4!=0){
         if(b1->data.player_to_play==BLACK){
             U16 anti_move= get_anti_move(*b1,this->start_moves_8_4[9-this->no_start_moves_8_4]);
-            outdata<<"Anti move"<< move_to_str(anti_move)<<std::endl;
+      //      outdata<<"Anti move"<< move_to_str(anti_move)<<std::endl;
             is_legal_move=moveset.count(anti_move)>0?true:false;
             b1->do_move_without_flip_(get_anti_move(*b1,this->start_moves_8_4[9-this->no_start_moves_8_4])); //correct this
         }
@@ -595,6 +602,7 @@ U16 Engine::find_best_move_8_4(const Board &b){
             this->best_move= get_anti_move(b,this->start_moves_8_4[9-this->no_start_moves_8_4]);
             this->no_start_moves_8_4--;
             this->best_move;
+            return this->best_move;
      }
     else {
          std::unordered_set<U16> special_moves; 
@@ -619,42 +627,47 @@ U16 Engine::find_best_move_8_4(const Board &b){
         std::unordered_set<U16> last_moves=b.get_pseudolegal_moves_for_piece(this->last_moved);
         special_moves.insert( last_moves.begin(), last_moves.end());
     
-        std::cout<<"2"<<std::endl;
-        int depth_level=3; //4
+     //   std::cout<<"2"<<std::endl;
+        int depth=3; //4
         //if(!no_immidiate_threat(b)){
           //  depth_level=2;
         //}
      boardCounts[uniq_hash(board_to_str(&b.data))]++;
 
      auto moveset = b.get_legal_moves();
-     std::cout <<"Legal Moves :";
-     for (auto m : moveset) {
-            std::cout << move_to_str(m) << " ";
-        }
-    std::cout <<"\n";
+   //  std::cout <<"Legal Moves :";
+   //  for (auto m : moveset) {
+   //         std::cout << move_to_str(m) << " ";
+   //     }
+   // std::cout <<"\n";
     double best_score = -99999;
     U16 best_move = random_sampling(moveset)[0];
     this->best_move=best_move;
-    std::cout<<"random_move "<<move_to_str(this->best_move)<<"\n";
+ //   std::cout<<"random_move "<<move_to_str(this->best_move)<<"\n";
     std::chrono::milliseconds time_limit(20000);
     //Board* copy_board = b.copy();
-    for(int depth=depth_level;depth<=depth_level;depth++){
         double best_max = -99999;
         U16 max_move=0;
         bool complete=true;
-        std::cout<<"at depth "<<depth;
+   //     std::cout<<"at depth "<<depth;
         for (auto move : moveset)
         {   if(special_moves.count(move)>0 && this->time_left>time_limit){
               depth = 4;
         }   if(this->time_left<time_limit){
-              depth =2 ;
+               std::srand(std::time(0));
+               int random_percentage = std::rand() % 100;
+              if (random_percentage < 70) {
+                  depth = 2;
+              } else {
+                  depth = 3;
+              }
         }
             Board *copy_board = new Board(b);
             copy_board->do_move_(move);
           //  copy_board->data.player_to_play = (PlayerColor)(copy_board->data.player_to_play ^ (WHITE | BLACK));
             double score = alpha_beta_minimax(*copy_board, depth - 1, -99999, 99999, false, this,b.data.player_to_play);
           //  std::cout<<board_to_str(&b.data)<<" score "<<score<<"\n";
-            outdata<<board_to_str(&b.data)<<" score "<<score<<" "<<depth<<" "<<move_to_str(move)<<"\n";
+     //       outdata<<board_to_str(&b.data)<<" score "<<score<<" "<<depth<<" "<<move_to_str(move)<<"\n";
 
             if (score > best_max)
             {
@@ -666,33 +679,33 @@ U16 Engine::find_best_move_8_4(const Board &b){
            best_score=best_max;
            best_move=max_move;
 
-        std::cout<<" best move "<<move_to_str(best_move)<<"\n";
+    //    std::cout<<" best move "<<move_to_str(best_move)<<"\n";
       //  outdata<<" best move "<<move_to_str(best_move)<<"\n";
-        this->best_move=best_move;
-    }
+     
    this->best_move = best_move;
         }
     return best_move;
 }
 
 U16 Engine::find_best_move_8_2(const Board &b){
-     std::ofstream outdata; 
-    outdata.open("log.txt", std::ios_base::app);
+ //    std::ofstream outdata; 
+  //  outdata.open("log.txt", std::ios_base::app);
      std::unordered_set<U16> moveset = b.get_legal_moves();
      Board *b1 = new Board(b);
      if (moveset.size() == 0) {
         std::cout << "Could not get any moves from board!\n";
         std::cout << board_to_str(&b.data);
         this->best_move = 0;
+        return this->best_move;
     }
     bool is_legal_move=false;
 
-    std::cout<<"1"<<std::endl;
+  //  std::cout<<"1"<<std::endl;
     //outdata<<"1";
      if(this->no_start_moves_8_2!=0){
         if(b1->data.player_to_play==BLACK){
             U16 anti_move= get_anti_move(*b1,this->start_moves_8_2[8-this->no_start_moves_8_2]);
-            outdata<<"Anti move"<< move_to_str(anti_move)<<std::endl;
+       //     outdata<<"Anti move"<< move_to_str(anti_move)<<std::endl;
             is_legal_move=moveset.count(anti_move)>0?true:false;
             b1->do_move_without_flip_(get_anti_move(*b1,this->start_moves_8_2[8-this->no_start_moves_8_2])); //correct this
         }
@@ -710,6 +723,7 @@ U16 Engine::find_best_move_8_2(const Board &b){
             this->best_move= get_anti_move(b,this->start_moves_8_2[8-this->no_start_moves_8_2]);
             this->no_start_moves_8_2--;
             this->best_move;
+            return this->best_move;
      }
     else {
           std::unordered_set<U16> special_moves; 
@@ -734,42 +748,63 @@ U16 Engine::find_best_move_8_2(const Board &b){
         std::unordered_set<U16> last_moves=b.get_pseudolegal_moves_for_piece(this->last_moved);
         special_moves.insert( last_moves.begin(), last_moves.end());
 
-        std::cout<<"2"<<std::endl;
-        int depth_level=3; //4
+     //   std::cout<<"2"<<std::endl;
+        int depth=3; //4
         //if(!no_immidiate_threat(b)){
           //  depth_level=2;
         //}
+       
      boardCounts[uniq_hash(board_to_str(&b.data))]++;
 
      auto moveset = b.get_legal_moves();
-     std::cout <<"Legal Moves :";
-     for (auto m : moveset) {
-            std::cout << move_to_str(m) << " ";
-        }
-    std::cout <<"\n";
+    //  std::unordered_set<U16> new_moves;
+    //   for(auto move:special_moves){
+    //        if(moveset.count(move)>0){
+    //         new_moves.insert(move);
+    //        }
+    //     }
+    //  if(no_immidiate_threat(b) && special_moves.size()>0){
+    //     moveset=new_moves;
+    //  }
+  //   std::cout <<"Legal Moves :";
+   //  for (auto m : moveset) {
+   //         std::cout << move_to_str(m) << " ";
+   //     }
+   // std::cout <<"\n";
     double best_score = -99999;
     U16 best_move = random_sampling(moveset)[0];
     this->best_move=best_move;
-    std::cout<<"random_move "<<move_to_str(this->best_move)<<"\n";
-    std::chrono::milliseconds time_limit(20000);
+  //  std::cout<<"random_move "<<move_to_str(this->best_move)<<"\n";
+    std::chrono::milliseconds time_limit(50000);
     //Board* copy_board = b.copy();
-    for(int depth=depth_level;depth<=depth_level;depth++){
         double best_max = -99999;
         U16 max_move=0;
         bool complete=true;
-        std::cout<<"at depth "<<depth;
+   //     std::cout<<"at depth "<<depth;
         for (auto move : moveset)
         {   if(special_moves.count(move)>0 && this->time_left>time_limit){
-              depth = 4;
+                std::srand(std::time(0));
+               int random_percentage = std::rand() % 100;
+              if (random_percentage < 80) {
+                  depth = 3;
+              } else {
+                  depth = 4;
+              }
         }   if(this->time_left<time_limit){
-              depth =2 ;
+               std::srand(std::time(0));
+               int random_percentage = std::rand() % 100;
+              if (random_percentage < 70) {
+                  depth = 2;
+              } else {
+                  depth = 3;
+              }
         }
             Board *copy_board = new Board(b);
             copy_board->do_move_(move);
           //  copy_board->data.player_to_play = (PlayerColor)(copy_board->data.player_to_play ^ (WHITE | BLACK));
             double score = alpha_beta_minimax(*copy_board, depth - 1, -99999, 99999, false, this,b.data.player_to_play);
           //  std::cout<<board_to_str(&b.data)<<" score "<<score<<"\n";
-            outdata<<board_to_str(&b.data)<<" score "<<score<<" "<<depth<<" "<<move_to_str(move)<<"\n";
+    //        outdata<<board_to_str(&b.data)<<" score "<<score<<" "<<depth<<" "<<move_to_str(move)<<"\n";
 
             if (score > best_max)
             {
@@ -781,10 +816,8 @@ U16 Engine::find_best_move_8_2(const Board &b){
            best_score=best_max;
            best_move=max_move;
 
-        std::cout<<" best move "<<move_to_str(best_move)<<"\n";
+      //  std::cout<<" best move "<<move_to_str(best_move)<<"\n";
       //  outdata<<" best move "<<move_to_str(best_move)<<"\n";
-        this->best_move=best_move;
-    }
    this->best_move = best_move;
         }
     return best_move;
@@ -792,12 +825,12 @@ U16 Engine::find_best_move_8_2(const Board &b){
 
 
 void Engine::find_best_move(const Board& b) {
-    auto start_time = std::chrono::high_resolution_clock::now();
-    std::ofstream outdata; 
-    outdata.open("log.txt", std::ios_base::app);
+  //  auto start_time = std::chrono::high_resolution_clock::now();
+  //  std::ofstream outdata; 
+  //  outdata.open("log.txt", std::ios_base::app); 
 
     if(!this->check_mate_moves.empty()){
-        outdata<<this->check_mate_moves.top()<<" came from stack"<<std::endl;
+   //     outdata<<this->check_mate_moves.top()<<" came from stack"<<std::endl;
         this->best_move=this->check_mate_moves.top();
         
         this->check_mate_moves.pop();
@@ -806,22 +839,22 @@ void Engine::find_best_move(const Board& b) {
     if(b.data.board_type==SEVEN_THREE){
         this->best_move=find_best_move_7_3(b);
         last_moved=getp1(this->best_move);
-        outdata<<"move run "<<move_to_str(this->best_move) <<std::endl;
+   //     outdata<<"move run "<<move_to_str(this->best_move) <<std::endl;
     }
     else if(b.data.board_type==EIGHT_FOUR){
         this->best_move=find_best_move_8_4(b);
         last_moved=getp1(this->best_move);
-        outdata<<"move run "<<move_to_str(this->best_move) <<std::endl;
+   //     outdata<<"move run "<<move_to_str(this->best_move) <<std::endl;
     }
     else if(b.data.board_type==EIGHT_TWO){
        this->best_move=find_best_move_8_2(b);
        last_moved=getp1(this->best_move);
-       outdata<<"move run "<<move_to_str(this->best_move) <<std::endl;
+   //    outdata<<"move run "<<move_to_str(this->best_move) <<std::endl;
     }
     }
-    auto end_time = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
-    outdata << " Time taken: " << duration.count() << " milliseconds" << std::endl;
+  //  auto end_time = std::chrono::high_resolution_clock::now();
+   // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+  //  outdata << " Time taken: " << duration.count() << " milliseconds" << std::endl;
   
     //std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 
