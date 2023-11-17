@@ -11,7 +11,7 @@ class Engine : public AbstractEngine {
     
     public:
     void find_best_move(const Board& b) override;
-    U16 find_best_move_7_3(const Board& b);
+    U16 find_best_move_7_3(const Board &b);
     U16 find_best_move_8_4(const Board &b);
     U16 find_best_move_8_2(const Board &b);
     std::unordered_set<U16> get_legal_moves_piece(Board c , U8 piece_pos);
@@ -22,6 +22,7 @@ class Engine : public AbstractEngine {
     int no_start_moves_8_2=8;
     U16 start_moves_8_2[8]={0x1319,0x0C13,0x150C,0x0B15,0x0209,0x0500,0x0D05,0x0501};
     std::stack<U16> check_mate_moves;
+    U8 last_moved; 
     //std::unordered_map<std::string,std::pair<int,int>> state_win_prob_map;
    // std::unordered_map<std::string,std::vector<string>> state_child_visit_map;
 };

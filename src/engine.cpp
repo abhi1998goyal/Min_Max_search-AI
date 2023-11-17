@@ -485,17 +485,42 @@ U16 Engine::find_best_move_7_3(const Board &b){
           //  depth_level=2;
         //}
      boardCounts[uniq_hash(board_to_str(&b.data))]++;
-
+     std::unordered_set<U16> special_moves; 
      auto moveset = b.get_legal_moves();
+      if(b.data.player_to_play==BLACK){
+         std::unordered_set<U16> special_moves_knight_b_1 = b.get_pseudolegal_moves_for_piece(b.data.b_knight_1);
+         std::unordered_set<U16> special_moves_knight_b_2 = b.get_pseudolegal_moves_for_piece(b.data.b_knight_2);
+         std::unordered_set<U16> special_moves_bishop_b = b.get_pseudolegal_moves_for_piece(b.data.b_bishop);
+         special_moves.insert(special_moves_knight_b_1.begin(), special_moves_knight_b_1.end());
+         special_moves.insert(special_moves_knight_b_2.begin(), special_moves_knight_b_2.end());
+         special_moves.insert(special_moves_bishop_b.begin(),special_moves_bishop_b.end());
+       }
+
+     else if (b.data.player_to_play==WHITE){
+         std::unordered_set<U16> special_moves_knight_w_1 = b.get_pseudolegal_moves_for_piece(b.data.w_knight_1);
+         std::unordered_set<U16> special_moves_knight_w_2 = b.get_pseudolegal_moves_for_piece(b.data.w_knight_1);
+         std::unordered_set<U16> special_moves_bishop_w = b.get_pseudolegal_moves_for_piece(b.data.w_bishop);
+         special_moves.insert(special_moves_knight_w_1.begin(), special_moves_knight_w_1.end());
+         special_moves.insert(special_moves_knight_w_2.begin(), special_moves_knight_w_2.end());
+         special_moves.insert(special_moves_bishop_w.begin(),special_moves_bishop_w.end());
+       }
+        std::unordered_set<U16> last_moves=b.get_pseudolegal_moves_for_piece(this->last_moved);
+        special_moves.insert( last_moves.begin(), last_moves.end());
+    
      std::cout <<"Legal Moves :";
      for (auto m : moveset) {
             std::cout << move_to_str(m) << " ";
+        }
+      std::cout <<" Special Moves :";
+     for (auto m : special_moves) {
+           outdata << move_to_str(m) << " ";
         }
     std::cout <<"\n";
     double best_score = -99999;
     U16 best_move = random_sampling(moveset)[0];
     this->best_move=best_move;
     std::cout<<"random_move "<<move_to_str(this->best_move)<<"\n";
+    std::chrono::milliseconds time_limit(20000);
     //Board* copy_board = b.copy();
     for(int depth=depth_level;depth<=depth_level;depth++){
         double best_max = -99999;
@@ -503,7 +528,11 @@ U16 Engine::find_best_move_7_3(const Board &b){
         bool complete=true;
         std::cout<<"at depth "<<depth;
         for (auto move : moveset)
-        {   
+        {   if(special_moves.count(move)>0 && this->time_left>time_limit){
+              depth = 4;
+        }   if(this->time_left<time_limit){
+              depth =2 ;
+        }
             Board *copy_board = new Board(b);
             copy_board->do_move_(move);
           //  copy_board->data.player_to_play = (PlayerColor)(copy_board->data.player_to_play ^ (WHITE | BLACK));
@@ -568,6 +597,28 @@ U16 Engine::find_best_move_8_4(const Board &b){
             this->best_move;
      }
     else {
+         std::unordered_set<U16> special_moves; 
+
+      if(b.data.player_to_play==BLACK){
+         std::unordered_set<U16> special_moves_knight_b_1 = b.get_pseudolegal_moves_for_piece(b.data.b_knight_1);
+         std::unordered_set<U16> special_moves_knight_b_2 = b.get_pseudolegal_moves_for_piece(b.data.b_knight_2);
+         std::unordered_set<U16> special_moves_bishop_b = b.get_pseudolegal_moves_for_piece(b.data.b_bishop);
+         special_moves.insert(special_moves_knight_b_1.begin(), special_moves_knight_b_1.end());
+         special_moves.insert(special_moves_knight_b_2.begin(), special_moves_knight_b_2.end());
+         special_moves.insert(special_moves_bishop_b.begin(),special_moves_bishop_b.end());
+       }
+
+     else if (b.data.player_to_play==WHITE){
+         std::unordered_set<U16> special_moves_knight_w_1 = b.get_pseudolegal_moves_for_piece(b.data.w_knight_1);
+         std::unordered_set<U16> special_moves_knight_w_2 = b.get_pseudolegal_moves_for_piece(b.data.w_knight_1);
+         std::unordered_set<U16> special_moves_bishop_w = b.get_pseudolegal_moves_for_piece(b.data.w_bishop);
+         special_moves.insert(special_moves_knight_w_1.begin(), special_moves_knight_w_1.end());
+         special_moves.insert(special_moves_knight_w_2.begin(), special_moves_knight_w_2.end());
+         special_moves.insert(special_moves_bishop_w.begin(),special_moves_bishop_w.end());
+       }
+        std::unordered_set<U16> last_moves=b.get_pseudolegal_moves_for_piece(this->last_moved);
+        special_moves.insert( last_moves.begin(), last_moves.end());
+    
         std::cout<<"2"<<std::endl;
         int depth_level=3; //4
         //if(!no_immidiate_threat(b)){
@@ -585,6 +636,7 @@ U16 Engine::find_best_move_8_4(const Board &b){
     U16 best_move = random_sampling(moveset)[0];
     this->best_move=best_move;
     std::cout<<"random_move "<<move_to_str(this->best_move)<<"\n";
+    std::chrono::milliseconds time_limit(20000);
     //Board* copy_board = b.copy();
     for(int depth=depth_level;depth<=depth_level;depth++){
         double best_max = -99999;
@@ -592,7 +644,11 @@ U16 Engine::find_best_move_8_4(const Board &b){
         bool complete=true;
         std::cout<<"at depth "<<depth;
         for (auto move : moveset)
-        {   
+        {   if(special_moves.count(move)>0 && this->time_left>time_limit){
+              depth = 4;
+        }   if(this->time_left<time_limit){
+              depth =2 ;
+        }
             Board *copy_board = new Board(b);
             copy_board->do_move_(move);
           //  copy_board->data.player_to_play = (PlayerColor)(copy_board->data.player_to_play ^ (WHITE | BLACK));
@@ -656,6 +712,28 @@ U16 Engine::find_best_move_8_2(const Board &b){
             this->best_move;
      }
     else {
+          std::unordered_set<U16> special_moves; 
+
+      if(b.data.player_to_play==BLACK){
+         std::unordered_set<U16> special_moves_knight_b_1 = b.get_pseudolegal_moves_for_piece(b.data.b_knight_1);
+         std::unordered_set<U16> special_moves_knight_b_2 = b.get_pseudolegal_moves_for_piece(b.data.b_knight_2);
+         std::unordered_set<U16> special_moves_bishop_b = b.get_pseudolegal_moves_for_piece(b.data.b_bishop);
+         special_moves.insert(special_moves_knight_b_1.begin(), special_moves_knight_b_1.end());
+         special_moves.insert(special_moves_knight_b_2.begin(), special_moves_knight_b_2.end());
+         special_moves.insert(special_moves_bishop_b.begin(),special_moves_bishop_b.end());
+       }
+
+     else if (b.data.player_to_play==WHITE){
+         std::unordered_set<U16> special_moves_knight_w_1 = b.get_pseudolegal_moves_for_piece(b.data.w_knight_1);
+         std::unordered_set<U16> special_moves_knight_w_2 = b.get_pseudolegal_moves_for_piece(b.data.w_knight_1);
+         std::unordered_set<U16> special_moves_bishop_w = b.get_pseudolegal_moves_for_piece(b.data.w_bishop);
+         special_moves.insert(special_moves_knight_w_1.begin(), special_moves_knight_w_1.end());
+         special_moves.insert(special_moves_knight_w_2.begin(), special_moves_knight_w_2.end());
+         special_moves.insert(special_moves_bishop_w.begin(),special_moves_bishop_w.end());
+       }
+        std::unordered_set<U16> last_moves=b.get_pseudolegal_moves_for_piece(this->last_moved);
+        special_moves.insert( last_moves.begin(), last_moves.end());
+
         std::cout<<"2"<<std::endl;
         int depth_level=3; //4
         //if(!no_immidiate_threat(b)){
@@ -673,6 +751,7 @@ U16 Engine::find_best_move_8_2(const Board &b){
     U16 best_move = random_sampling(moveset)[0];
     this->best_move=best_move;
     std::cout<<"random_move "<<move_to_str(this->best_move)<<"\n";
+    std::chrono::milliseconds time_limit(20000);
     //Board* copy_board = b.copy();
     for(int depth=depth_level;depth<=depth_level;depth++){
         double best_max = -99999;
@@ -680,7 +759,11 @@ U16 Engine::find_best_move_8_2(const Board &b){
         bool complete=true;
         std::cout<<"at depth "<<depth;
         for (auto move : moveset)
-        {   
+        {   if(special_moves.count(move)>0 && this->time_left>time_limit){
+              depth = 4;
+        }   if(this->time_left<time_limit){
+              depth =2 ;
+        }
             Board *copy_board = new Board(b);
             copy_board->do_move_(move);
           //  copy_board->data.player_to_play = (PlayerColor)(copy_board->data.player_to_play ^ (WHITE | BLACK));
@@ -716,19 +799,23 @@ void Engine::find_best_move(const Board& b) {
     if(!this->check_mate_moves.empty()){
         outdata<<this->check_mate_moves.top()<<" came from stack"<<std::endl;
         this->best_move=this->check_mate_moves.top();
+        
         this->check_mate_moves.pop();
     }
     else{
     if(b.data.board_type==SEVEN_THREE){
         this->best_move=find_best_move_7_3(b);
+        last_moved=getp1(this->best_move);
         outdata<<"move run "<<move_to_str(this->best_move) <<std::endl;
     }
     else if(b.data.board_type==EIGHT_FOUR){
         this->best_move=find_best_move_8_4(b);
+        last_moved=getp1(this->best_move);
         outdata<<"move run "<<move_to_str(this->best_move) <<std::endl;
     }
     else if(b.data.board_type==EIGHT_TWO){
        this->best_move=find_best_move_8_2(b);
+       last_moved=getp1(this->best_move);
        outdata<<"move run "<<move_to_str(this->best_move) <<std::endl;
     }
     }
